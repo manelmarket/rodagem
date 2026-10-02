@@ -5,11 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#26303A">
 <title>Rodagem</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Rodagem">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Semi+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="config.js"></script>
 <style>
 :root{
   --asfalto:#26303A; --asfalto2:#34404C; --fundo:#ECEFF2; --papel:#FFFFFF;
@@ -146,8 +154,54 @@ dialog::backdrop{background:rgba(31,38,45,.55)}
 .toast{position:fixed;left:50%;bottom:calc(150px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--asfalto);color:#fff;padding:10px 18px;border-radius:999px;font-weight:500;z-index:50;opacity:0;pointer-events:none;transition:opacity .2s}
 .toast.on{opacity:1}
 
+/* v1.0.1: menu lateral, meta, comparação, dia da semana, fechar o dia */
+.btn-menu{background:none;border:0;color:#fff;width:40px;height:40px;margin-left:-8px;border-radius:8px;cursor:pointer;display:grid;place-items:center;position:relative;flex:none}
+.btn-menu:hover{background:var(--asfalto2)}
+.btn-menu svg{width:24px;height:24px}
+.btn-menu .ponto{position:absolute;top:6px;right:5px;width:10px;height:10px;border-radius:50%;background:var(--sinal);border:2px solid var(--asfalto)}
+.veu{position:fixed;inset:0;background:rgba(31,38,45,.55);z-index:40;opacity:0;pointer-events:none;transition:opacity .2s}
+.veu.on{opacity:1;pointer-events:auto}
+.gaveta{position:fixed;top:0;bottom:0;left:0;width:min(340px,88vw);background:var(--papel);z-index:41;transform:translateX(-100%);visibility:hidden;transition:transform .22s ease,visibility 0s linear .22s;display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom,0px)}
+.gaveta.on{transform:none;visibility:visible;transition:transform .22s ease,visibility 0s}
+.gaveta-cab{background:var(--asfalto);color:#fff;padding:calc(env(safe-area-inset-top,0px) + 14px) 16px 14px 20px;display:flex;align-items:center;justify-content:space-between}
+.gaveta-cab .fechar{color:#C9D1D8}
+.gaveta-corpo{overflow-y:auto;flex:1;padding:0 20px 24px}
+.cfg{padding:18px 0;border-bottom:1px solid var(--linha);display:grid;gap:12px}
+.cfg:last-child{border-bottom:0}
+.cfg h3{margin:0;font-size:1rem;font-weight:700}
+.cfg p{margin:0;color:var(--cinza);font-size:.9rem}
+.cfg .btn{width:100%}
+.cfg .toggle{padding:0}
+.versao{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.versao b{font-family:var(--num);font-size:1.25rem}
+.nova{background:#FFF6D6;border-radius:8px;padding:10px 12px;color:#5C4A00;font-size:.92rem}
+.btn-sinal{background:var(--sinal);color:var(--asfalto)}
+.aviso-versao{background:var(--sinal);color:var(--asfalto);font-size:.92rem;font-weight:500;padding:8px 16px;display:flex;justify-content:center;align-items:center;gap:12px;flex-wrap:wrap}
+.aviso-versao button{background:var(--asfalto);color:#fff;border:0;border-radius:999px;padding:5px 14px;font-weight:600;cursor:pointer}
+.aviso-offline{background:#DDE3E9;color:var(--tinta);font-size:.88rem;padding:8px 16px;text-align:center}
+.comparacao{display:inline-block;margin:-4px 0 16px;padding:4px 12px;border-radius:999px;font-size:.9rem;font-weight:600;background:var(--asfalto2);color:#C9D1D8}
+.comparacao.sobe{color:#86E0AA}
+.comparacao.desce{color:#FFA3A3}
+.meta{background:var(--papel);border:1px solid var(--linha);border-radius:10px;padding:14px 16px;margin-top:16px}
+.meta-topo{display:flex;justify-content:space-between;align-items:baseline;gap:4px 12px;flex-wrap:wrap}
+.meta-topo span{color:var(--cinza);font-size:.9rem}
+.meta-topo b{font-family:var(--num);font-size:1.35rem;font-weight:600}
+.meta-barra{height:12px;background:var(--fundo);border-radius:6px;overflow:hidden;margin:10px 0 8px}
+.meta-barra i{display:block;height:100%;background:var(--sinal);border-radius:6px}
+.meta.batida .meta-barra i{background:var(--lucro)}
+.meta p{margin:0;font-size:.95rem}
+.semana li.melhor .valor{color:var(--lucro)}
+.semana small{color:var(--cinza);font-size:.82rem;margin-left:6px}
+.nota{color:var(--cinza);font-size:.85rem;margin:12px 0 0}
+.grupo-app{grid-column:1/-1;border:1px solid var(--linha);border-radius:10px;padding:10px 12px 12px;margin:0;display:grid;grid-template-columns:1fr 1fr;gap:10px;min-width:0}
+.grupo-app legend{font-weight:700;padding:0 6px}
+.subtitulo{grid-column:1/-1;margin:4px 0 0;font-size:1rem;font-weight:700}
+.btn-link{background:none;border:0;color:var(--asfalto);text-decoration:underline;font-weight:600;cursor:pointer;padding:6px 0;text-align:left}
+.ou{grid-column:1/-1;text-align:center;color:var(--cinza);font-size:.9rem;margin:0}
+
 @media (min-width:640px){
   .metricas{grid-template-columns:repeat(4,1fr)}
+  .grupo-app{grid-template-columns:repeat(4,1fr)}
   dialog{border-radius:16px;margin:auto}
 }
 @media (min-width:900px){
@@ -180,11 +234,11 @@ dialog::backdrop{background:rgba(31,38,45,.55)}
 <div id="app" class="hide">
   <header class="topo">
     <div class="topo-linha">
+      <button class="btn-menu" id="btnMenu" type="button" aria-label="Abrir menu" aria-controls="gaveta" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span class="ponto hide" id="pontoMenu"></span></button>
       <div class="marca"><i></i>Rodagem</div>
       <div class="abas" id="abas"></div>
       <div class="topo-acoes">
         <button class="btn-icone" id="btnCsv" type="button">Exportar planilha</button>
-        <button class="btn-icone hide" id="btnSair" type="button">Sair</button>
       </div>
     </div>
     <div class="periodo" id="periodo" role="group" aria-label="Período">
@@ -193,24 +247,32 @@ dialog::backdrop{background:rgba(31,38,45,.55)}
       <button type="button" data-p="mes">Este mês</button>
       <button type="button" data-p="mesant">Mês passado</button>
       <button type="button" data-p="ano">Este ano</button>
+      <button type="button" data-p="custom" id="btnOutro">Outro período</button>
     </div>
   </header>
   <div class="aviso-demo hide" id="avisoDemo">Modo demonstração: os dados ficam só neste navegador. Configure o Supabase para salvar na nuvem.</div>
+  <div class="aviso-versao hide" id="avisoVersao"></div>
+  <div class="aviso-offline hide" id="avisoOffline">Sem internet. O que você lançar fica salvo no aparelho e sincroniza quando a conexão voltar.</div>
   <main id="conteudo"></main>
   <nav class="baixo" id="navBaixo"></nav>
   <button class="fab" id="fab" type="button" aria-label="Novo lançamento">+</button>
+  <div class="veu" id="veu"></div>
+  <aside class="gaveta" id="gaveta" aria-label="Menu e configurações"></aside>
 </div>
 
 <dialog id="dlg"></dialog>
 <div class="toast" id="toast" role="status"></div>
 
 <script>
-/* ===== Configuração: cole aqui os dados do seu projeto Supabase ===== */
-const CONFIG = {
-  SUPABASE_URL: 'https://peddblwetjyprpgdxpam.supabase.co',       // ex.: https://abcdefgh.supabase.co
-  SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBlZGRibHdldGp5cHJwZ2R4cGFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA5NTI2NzEsImV4cCI6MjEwNjUyODY3MX0.jH0-GP_FoBxGyL7-YjuUvZAoONWqwHmOT8AOHmU6ckc'   // Project Settings > API > anon public
+/* ===== Configuração do Supabase =====
+   Jeito recomendado: deixe as chaves no arquivo config.js (assim você troca o index.html
+   em cada versão nova sem perder as chaves). Se preferir, ainda pode colar aqui embaixo. */
+const CONFIG = (window.RODAGEM_CONFIG && window.RODAGEM_CONFIG.SUPABASE_URL) ? window.RODAGEM_CONFIG : {
+  SUPABASE_URL: '',       // ex.: https://abcdefgh.supabase.co
+  SUPABASE_ANON_KEY: ''   // Project Settings > API > anon public
 };
 /* ==================================================================== */
+const APP_VERSION = '1.0.1';
 
 const DEMO = !CONFIG.SUPABASE_URL || !CONFIG.SUPABASE_ANON_KEY;
 const sb = DEMO ? null : supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
@@ -233,7 +295,9 @@ const ABAS = [
   {id:'abastecimentos', nome:'Combustível'}
 ];
 
-const estado = { aba:'painel', periodo:'mes', ganhos:[], gastos:[], abastecimentos:[] };
+const estado = { aba:'painel', periodo:'mes', ganhos:[], gastos:[], abastecimentos:[],
+  ini:null, fim:null, customTipo:null, dHoje:null, anterior:null, userId:null, email:'', cfg:null };
+const CFG_PADRAO = { meta_diaria:0, mostrar_meta:true, apps_ativos:['Uber','99'], app_padrao:'Uber', periodo_inicial:'mes' };
 let grafico = null;
 
 /* ===== utilidades ===== */
@@ -244,7 +308,7 @@ const soma = (arr,f) => arr.reduce((t,r)=>t+(Number(f(r))||0),0);
 const iso = d => { const z = new Date(d.getTime()-d.getTimezoneOffset()*60000); return z.toISOString().slice(0,10); };
 const hoje = () => iso(new Date());
 const esc = s => String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const uid = () => (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36)+Math.random().toString(36).slice(2));
+const uid = () => (crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{ const r=Math.random()*16|0; return (c==='x'?r:(r&3|8)).toString(16); }));
 const MESES = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
 
 function intervalo(p){
@@ -253,7 +317,26 @@ function intervalo(p){
   if(p==='mes'){ a = new Date(n.getFullYear(),n.getMonth(),1); b = new Date(n.getFullYear(),n.getMonth()+1,0); }
   if(p==='mesant'){ a = new Date(n.getFullYear(),n.getMonth()-1,1); b = new Date(n.getFullYear(),n.getMonth(),0); }
   if(p==='ano'){ a = new Date(n.getFullYear(),0,1); b = new Date(n.getFullYear(),11,31); }
+  if(p==='custom' && estado.ini && estado.fim) return [estado.ini, estado.fim];
   return [iso(a), iso(b)];
+}
+// período anterior usado na comparação
+function intervaloAnterior(p){
+  const n = new Date(); const [a,b] = intervalo(p);
+  const A = new Date(a+'T12:00:00'), B = new Date(b+'T12:00:00');
+  if(p==='mes'){ const ult=new Date(n.getFullYear(),n.getMonth(),0).getDate(); return [iso(new Date(n.getFullYear(),n.getMonth()-1,1)), iso(new Date(n.getFullYear(),n.getMonth()-1,Math.min(n.getDate(),ult)))]; }
+  if(p==='mesant' || (p==='custom' && estado.customTipo==='mes')) return [iso(new Date(A.getFullYear(),A.getMonth()-1,1)), iso(new Date(A.getFullYear(),A.getMonth(),0))];
+  if(p==='ano'){ return [iso(new Date(n.getFullYear()-1,0,1)), iso(new Date(n.getFullYear()-1,n.getMonth(),n.getDate()))]; }
+  const dias = Math.round((B-A)/864e5)+1;
+  const fA = new Date(A); fA.setDate(fA.getDate()-dias); const fB = new Date(A); fB.setDate(fB.getDate()-1);
+  return [iso(fA), iso(fB)];
+}
+const TEXTO_ANTERIOR = { hoje:'que ontem', semana:'que nos 7 dias anteriores', mes:'que no mesmo período do mês passado', mesant:'que no mês anterior', ano:'que no mesmo período do ano passado', custom:'que no período anterior' };
+function agrupaPorMes(){ const [a,b]=intervalo(estado.periodo); return estado.periodo==='ano' || (new Date(b)-new Date(a))/864e5 > 62; }
+function parseNum(v){
+  let x=String(v??'').trim().replace(/\s|R\$/g,'');
+  if(x.includes(',')) x=x.replace(/\./g,'').replace(',','.');
+  if(x==='') return null; const n=Number(x); return isNaN(n) ? NaN : n;
 }
 function toast(t){ const el=$('#toast'); el.textContent=t; el.classList.add('on'); clearTimeout(toast._t); toast._t=setTimeout(()=>el.classList.remove('on'),2200); }
 
@@ -262,11 +345,60 @@ const Local = {
   get(t){ try{ return JSON.parse(localStorage.getItem('rodagem_'+t)) || []; }catch(e){ return []; } },
   set(t,v){ try{ localStorage.setItem('rodagem_'+t, JSON.stringify(v)); }catch(e){} }
 };
+const ordenar = l => l.sort((x,y)=>y.data.localeCompare(x.data) || (y.created_at||'').localeCompare(x.created_at||''));
+const ehErroRede = e => !navigator.onLine || /fetch|network|load failed|offline/i.test(String(e && (e.message||e)));
+// cópia local do que veio da nuvem, para abrir o app sem internet
+const Cache = {
+  get(t){ return Local.get('cache_'+t); },
+  set(t,v){ Local.set('cache_'+t,v); },
+  trocarFaixa(t,a,b,rows){ this.set(t,[...this.get(t).filter(r=>r.data<a||r.data>b),...rows]); },
+  gravar(t,r){ const l=this.get(t).filter(x=>x.id!==r.id); l.push(r); this.set(t,l); },
+  remover(t,id){ this.set(t,this.get(t).filter(x=>x.id!==id)); }
+};
+// lançamentos feitos sem internet esperam aqui até sincronizar
+const Fila = {
+  get(){ return Local.get('fila'); },
+  set(v){ Local.set('fila',v); atualizarPendentes(); },
+  add(item){ const f=this.get(); f.push(item); this.set(f); },
+  rodando:false,
+  async processar(){
+    if(DEMO || this.rodando || !navigator.onLine || !this.get().length) return;
+    this.rodando=true;
+    try{
+      let f=this.get();
+      while(f.length){
+        const it=f[0];
+        try{
+          const {error} = it.op==='upsert' ? await sb.from(it.t).upsert(it.reg) : await sb.from(it.t).delete().eq('id',it.id);
+          if(error) throw error;
+        }catch(e){
+          if(ehErroRede(e)) break;
+          console.error(e); toast('Um lançamento pendente foi recusado: '+(e.message||''));
+        }
+        f.shift(); this.set(f);
+      }
+    } finally { this.rodando=false; }
+  }
+};
 const DB = {
   async listar(t,a,b){
-    if(DEMO) return Local.get(t).filter(r=>r.data>=a && r.data<=b).sort((x,y)=>y.data.localeCompare(x.data) || (y.created_at||'').localeCompare(x.created_at||''));
-    const {data,error} = await sb.from(t).select('*').gte('data',a).lte('data',b).order('data',{ascending:false}).order('created_at',{ascending:false});
-    if(error) throw error; return data;
+    if(DEMO) return ordenar(Local.get(t).filter(r=>r.data>=a && r.data<=b));
+    try{
+      await Fila.processar();
+      const {data,error} = await sb.from(t).select('*').gte('data',a).lte('data',b).order('data',{ascending:false}).order('created_at',{ascending:false});
+      if(error) throw error;
+      const mapa = new Map(data.map(r=>[r.id,r]));
+      Fila.get().forEach(i=>{ if(i.t!==t) return; if(i.op==='delete') mapa.delete(i.id); else if(i.reg.data>=a && i.reg.data<=b) mapa.set(i.reg.id,i.reg); });
+      const rows=[...mapa.values()]; Cache.trocarFaixa(t,a,b,rows); return ordenar(rows);
+    }catch(e){
+      if(!ehErroRede(e)) throw e;
+      return ordenar(Cache.get(t).filter(r=>r.data>=a && r.data<=b));
+    }
+  },
+  async ultimo(t){
+    if(DEMO) return ordenar(Local.get(t))[0] || null;
+    try{ const {data,error}=await sb.from(t).select('*').order('data',{ascending:false}).order('created_at',{ascending:false}).limit(1); if(error) throw error; return data[0]||null; }
+    catch(e){ return ordenar(Cache.get(t))[0] || null; }
   },
   async salvar(t,reg){
     if(DEMO){
@@ -275,12 +407,49 @@ const DB = {
       else todos.push({...reg, id:uid(), created_at:new Date().toISOString()});
       Local.set(t,todos); return;
     }
-    if(reg.id){ const {id,...resto}=reg; const {error}=await sb.from(t).update(resto).eq('id',id); if(error) throw error; }
-    else { const {error}=await sb.from(t).insert(reg); if(error) throw error; }
+    let r = {...reg};
+    if(!r.id){ r.id=uid(); r.created_at=new Date().toISOString(); }
+    else { const orig=Cache.get(t).find(x=>x.id===r.id) || estado[t].find(x=>x.id===r.id); if(orig) r={...orig,...r}; }
+    if(estado.userId) r.user_id=estado.userId;
+    Cache.gravar(t,r);
+    try{
+      if(!navigator.onLine) throw new Error('offline');
+      const {error}=await sb.from(t).upsert(r); if(error) throw error;
+    }catch(e){
+      if(ehErroRede(e)){ Fila.add({op:'upsert',t,reg:r}); return 'fila'; }
+      throw e;
+    }
   },
   async excluir(t,id){
     if(DEMO){ Local.set(t, Local.get(t).filter(r=>r.id!==id)); return; }
-    const {error}=await sb.from(t).delete().eq('id',id); if(error) throw error;
+    Cache.remover(t,id);
+    try{
+      if(!navigator.onLine) throw new Error('offline');
+      const {error}=await sb.from(t).delete().eq('id',id); if(error) throw error;
+    }catch(e){
+      if(ehErroRede(e)){ Fila.add({op:'delete',t,id}); return 'fila'; }
+      throw e;
+    }
+  }
+};
+// configurações: ficam na nuvem (valem em todos os aparelhos) com cópia local
+const Cfg = {
+  async carregar(){
+    let c = null; try{ c = JSON.parse(localStorage.getItem('rodagem_cfg')); }catch(e){}
+    estado.cfg = {...CFG_PADRAO, ...(c||{})};
+    if(DEMO || !estado.userId) return;
+    try{
+      const {data,error}=await sb.from('configuracoes').select('dados').eq('user_id',estado.userId).maybeSingle();
+      if(error) throw error;
+      if(data && data.dados){ estado.cfg={...CFG_PADRAO,...data.dados}; this.local(); }
+    }catch(e){ console.warn('configurações: usando cópia local', e); }
+  },
+  local(){ try{ localStorage.setItem('rodagem_cfg', JSON.stringify(estado.cfg)); }catch(e){} },
+  async salvar(){
+    this.local();
+    if(DEMO || !estado.userId) return;
+    try{ const {error}=await sb.from('configuracoes').upsert({user_id:estado.userId, dados:estado.cfg, atualizado_em:new Date().toISOString()}); if(error) throw error; }
+    catch(e){ console.warn(e); if(!ehErroRede(e)) toast('Configuração salva só neste aparelho. Rode o SQL da versão 1.0.1 no Supabase.'); }
   }
 };
 
@@ -306,8 +475,8 @@ function semearDemo(){
 }
 
 /* ===== cálculos ===== */
-function calcular(){
-  const G=estado.ganhos, X=estado.gastos, A=estado.abastecimentos;
+function calcular(d=estado){
+  const G=d.ganhos, X=d.gastos, A=d.abastecimentos;
   const bruto = soma(G,r=>Number(r.valor)+Number(r.gorjeta||0));
   const combustivel = soma(A,r=>r.valor);
   const outros = soma(X,r=>r.valor);
@@ -330,20 +499,35 @@ function montarNavegacao(){
   $('#abas').innerHTML = ABAS.map(a=>`<button type="button" data-aba="${a.id}">${a.nome}</button>`).join('');
   $('#navBaixo').innerHTML = ABAS.map(a=>`<button type="button" data-aba="${a.id}">${ICONES[a.id]}<span>${a.nome}</span></button>`).join('');
   document.querySelectorAll('[data-aba]').forEach(b=>b.addEventListener('click',()=>{ estado.aba=b.dataset.aba; render(); window.scrollTo(0,0); }));
-  document.querySelectorAll('#periodo button').forEach(b=>b.addEventListener('click',()=>{ estado.periodo=b.dataset.p; carregar(); }));
+  document.querySelectorAll('#periodo button').forEach(b=>b.addEventListener('click',()=>{ if(b.dataset.p==='custom'){ abrirPeriodo(); return; } estado.periodo=b.dataset.p; carregar(); }));
 }
 function marcarAtivos(){
   document.querySelectorAll('[data-aba]').forEach(b=>b.setAttribute('aria-current', b.dataset.aba===estado.aba ? 'true':'false'));
   document.querySelectorAll('#periodo button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.p===estado.periodo ? 'true':'false'));
+  if(estado.periodo!=='custom') $('#btnOutro').textContent='Outro período';
 }
 
 async function carregar(){
   const [a,b] = intervalo(estado.periodo);
+  estado.anterior = null;
   try{
     const [g,x,ab] = await Promise.all([DB.listar('ganhos',a,b),DB.listar('gastos',a,b),DB.listar('abastecimentos',a,b)]);
     estado.ganhos=g; estado.gastos=x; estado.abastecimentos=ab;
   }catch(e){ console.error(e); toast('Não foi possível carregar. Confira a conexão.'); }
   render();
+  // dados extras do painel: meta de hoje e comparação com o período anterior
+  const h = hoje();
+  try{
+    if(h>=a && h<=b){ const f=r=>r.data===h; estado.dHoje={ganhos:estado.ganhos.filter(f),gastos:estado.gastos.filter(f),abastecimentos:estado.abastecimentos.filter(f)}; }
+    else estado.dHoje = await buscar(h,h);
+  }catch(e){ estado.dHoje=null; }
+  try{ const [pa,pb]=intervaloAnterior(estado.periodo); estado.anterior = calcular(await buscar(pa,pb)); }
+  catch(e){ estado.anterior=null; }
+  if(estado.aba==='painel') render();
+}
+async function buscar(a,b){
+  const [g,x,ab] = await Promise.all([DB.listar('ganhos',a,b),DB.listar('gastos',a,b),DB.listar('abastecimentos',a,b)]);
+  return {ganhos:g,gastos:x,abastecimentos:ab};
 }
 
 function render(){
@@ -382,6 +566,7 @@ function htmlPainel(){
   <section class="estrada" aria-label="Resumo do período">
     <p>Lucro no período</p>
     <div class="lucro ${m.lucro<0?'neg':''}">${moeda(m.lucro)}</div>
+    ${htmlComparacao(m)}
     <div class="partes">
       <div><span>Ganhos</span><b>${moeda(m.bruto)}</b></div>
       <div><span>Gastos</span><b>${moeda(m.gastos)}</b></div>
@@ -389,6 +574,7 @@ function htmlPainel(){
     </div>
     <div class="faixa"></div>
   </section>
+  ${htmlMeta()}
 
   <div class="metricas">
     <div class="metrica"><span>Lucro por hora</span><b>${porHora}</b><small>${m.horas?numero(m.horas,1)+' h online':''}</small></div>
@@ -398,20 +584,62 @@ function htmlPainel(){
   </div>
 
   ${nada ? `<div class="bloco vazio">Nenhum lançamento neste período.<br><button class="btn btn-pri" type="button" data-novo="ganhos">Lançar o primeiro ganho</button></div>` : `
-  ${estado.periodo!=='hoje' ? `<div class="bloco"><h2>Ganhos e gastos ${estado.periodo==='ano'?'por mês':'por dia'}</h2><div class="grafico"><canvas id="cv"></canvas></div></div>`:''}
+  ${estado.periodo!=='hoje' ? `<div class="bloco"><h2>Ganhos e gastos ${agrupaPorMes()?'por mês':'por dia'}</h2><div class="grafico"><canvas id="cv"></canvas></div></div>`:''}
   <div class="duas">
     <div class="bloco"><h2>Para onde foi o dinheiro</h2>${listaCats.length?`<ul class="barra-lista">${listaCats.map(([k,v])=>`<li><span>${esc(k)}</span><span class="valor">${moeda(v)}</span><span class="trilho"><i style="width:${(v/maxCat*100).toFixed(1)}%;background:var(--gasto)"></i></span></li>`).join('')}</ul>`:'<p class="vazio">Sem gastos no período.</p>'}</div>
     <div class="bloco"><h2>Ganhos por aplicativo</h2>${listaApps.length?`<ul class="barra-lista">${listaApps.map(([k,v])=>`<li><span>${esc(k)}</span><span class="valor">${moeda(v)}</span><span class="trilho"><i style="width:${(v/maxApp*100).toFixed(1)}%;background:${CORES_APP[k]||'#8A96A3'}"></i></span></li>`).join('')}</ul>`:'<p class="vazio">Sem ganhos no período.</p>'}</div>
-  </div>`}`;
+  </div>
+  ${htmlSemana()}`}`;
+}
+
+function htmlComparacao(m){
+  const ant = estado.anterior; if(!ant) return '';
+  if(!ant.bruto && !ant.gastos) return '';
+  const dif = m.lucro - ant.lucro; const txt = estado.periodo==='custom' && estado.customTipo==='mes' ? 'que no mês anterior' : TEXTO_ANTERIOR[estado.periodo];
+  if(Math.abs(dif) < 0.005) return `<div class="comparacao">Mesmo lucro ${txt}</div>`;
+  const classe = dif>0 ? 'sobe' : 'desce';
+  if(ant.lucro > 0){
+    const pct = dif/ant.lucro*100;
+    return `<div class="comparacao ${classe}">${dif>0?'▲':'▼'} ${numero(Math.abs(pct),0)}% ${dif>0?'a mais':'a menos'} ${txt}</div>`;
+  }
+  return `<div class="comparacao ${classe}">${dif>0?'▲':'▼'} ${moeda(Math.abs(dif))} ${dif>0?'a mais':'a menos'} ${txt}</div>`;
+}
+
+function htmlMeta(){
+  const c = estado.cfg; if(!c || !c.mostrar_meta || !(Number(c.meta_diaria)>0) || !estado.dHoje) return '';
+  const meta = Number(c.meta_diaria), lucro = calcular(estado.dHoje).lucro;
+  const pct = Math.max(0, Math.min(100, lucro/meta*100)); const batida = lucro >= meta;
+  const msg = batida ? `Meta batida. Você está ${moeda(lucro-meta)} acima.` : `Faltam <b>${moeda(meta-lucro)}</b> para bater a meta de hoje.`;
+  return `<section class="meta ${batida?'batida':''}" aria-label="Meta de hoje">
+    <div class="meta-topo"><span>Lucro de hoje</span><b>${moeda(lucro)} de ${moeda(meta)}</b></div>
+    <div class="meta-barra" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct.toFixed(0)}"><i style="width:${pct.toFixed(1)}%"></i></div>
+    <p>${msg}</p>
+  </section>`;
+}
+
+function htmlSemana(){
+  if(estado.periodo==='hoje') return '';
+  const NOMES = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+  const d = NOMES.map(()=>({valor:0,horas:0,dias:new Set()}));
+  estado.ganhos.forEach(r=>{ const w=new Date(r.data+'T12:00:00').getDay(); d[w].valor+=Number(r.valor)+Number(r.gorjeta||0); d[w].horas+=Number(r.horas)||0; d[w].dias.add(r.data); });
+  const lista = d.map((x,i)=>({nome:NOMES[i],ph:x.horas>0?x.valor/x.horas:0,dias:x.dias.size})).filter(x=>x.ph>0);
+  if(lista.length<2) return '';
+  const max = Math.max(...lista.map(x=>x.ph));
+  const ordem=[1,2,3,4,5,6,0].map(i=>NOMES[i]);
+  lista.sort((a,b)=>ordem.indexOf(a.nome)-ordem.indexOf(b.nome));
+  return `<div class="bloco"><h2>Ganho por hora em cada dia da semana</h2>
+    <ul class="barra-lista semana">${lista.map(x=>`<li class="${x.ph===max?'melhor':''}"><span>${x.nome}<small>${x.dias} ${x.dias>1?'dias':'dia'}</small></span><span class="valor">${moeda(x.ph)}/h</span><span class="trilho"><i style="width:${(x.ph/max*100).toFixed(1)}%;background:${x.ph===max?'var(--lucro)':'var(--asfalto)'}"></i></span></li>`).join('')}</ul>
+    <p class="nota">Média do que entrou por hora online nos dias do período. Quanto mais semanas no filtro, mais confiável.</p>
+  </div>`;
 }
 
 function desenharGrafico(){
   const cv = document.getElementById('cv'); if(!cv || !window.Chart) return;
-  const porMes = estado.periodo==='ano';
+  const porMes = agrupaPorMes();
   const chave = d => porMes ? d.slice(0,7) : d;
   const [a,b] = intervalo(estado.periodo);
   const rotulos=[], chaves=[];
-  if(porMes){ for(let m=0;m<12;m++){ chaves.push(a.slice(0,4)+'-'+String(m+1).padStart(2,'0')); rotulos.push(MESES[m]); } }
+  if(porMes){ const d=new Date(a.slice(0,7)+'-01T12:00:00'), fim=new Date(b.slice(0,7)+'-01T12:00:00'); const varios=d.getFullYear()!==fim.getFullYear(); while(d<=fim){ chaves.push(iso(d).slice(0,7)); rotulos.push(MESES[d.getMonth()]+(varios?'/'+String(d.getFullYear()).slice(2):'')); d.setMonth(d.getMonth()+1); } }
   else { const d=new Date(a+'T12:00:00'), fim=new Date(b+'T12:00:00'); while(d<=fim){ const k=iso(d); chaves.push(k); rotulos.push(String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')); d.setDate(d.getDate()+1);} }
   const G=Object.fromEntries(chaves.map(k=>[k,0])), X=Object.fromEntries(chaves.map(k=>[k,0]));
   estado.ganhos.forEach(r=>{ const k=chave(r.data); if(k in G) G[k]+=Number(r.valor)+Number(r.gorjeta||0); });
@@ -504,22 +732,24 @@ function abrirEscolha(){
   const d=$('#dlg');
   d.innerHTML = `<div class="form-cab"><h2>Novo lançamento</h2><button class="fechar" type="button" aria-label="Fechar">&times;</button></div>
   <div class="escolha">
-    <button class="btn btn-sec" type="button" data-t="ganhos">Ganho do dia</button>
+    <button class="btn btn-pri" type="button" data-t="fechar">Fechar o dia (tudo de uma vez)</button>
+    <button class="btn btn-sec" type="button" data-t="ganhos">Só um ganho</button>
     <button class="btn btn-sec" type="button" data-t="abastecimentos">Abastecimento</button>
     <button class="btn btn-sec" type="button" data-t="gastos">Outro gasto</button>
   </div>`;
   d.querySelector('.fechar').onclick=()=>d.close();
-  d.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>abrirForm(b.dataset.t));
+  d.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=> b.dataset.t==='fechar' ? abrirFecharDia() : abrirForm(b.dataset.t));
   if(!d.open) d.showModal();
 }
 
 function abrirForm(t,reg){
   const d=$('#dlg'); const editando=!!reg;
   const v = reg ? {...reg} : {data:hoje(),...PADRAO[t]};
+  if(!reg && t==='ganhos' && estado.cfg) v.app = estado.cfg.app_padrao || v.app;
   d.innerHTML = `<form id="fLanc" novalidate>
     <div class="form-cab"><h2>${editando?'Editar':'Novo'} ${TITULOS[t]}</h2><button class="fechar" type="button" aria-label="Fechar">&times;</button></div>
     <div class="form-corpo">${CAMPOS[t].map(c=>campoHtml(c,v[c.n])).join('')}</div>
-    <div class="form-pe">${editando?'<button class="btn btn-del" type="button" id="btnExcluir">Excluir</button>':''}<button class="btn btn-pri" type="submit">${editando?'Salvar alterações':'Salvar'}</button></div>
+    <div class="form-pe">${editando?'<button class="btn btn-del" type="button" id="btnExcluir">Excluir</button>':''}${!editando&&t==='ganhos'?'<button class="btn-link" type="button" id="btnRepetir">Repetir último</button>':''}<button class="btn btn-pri" type="submit">${editando?'Salvar alterações':'Salvar'}</button></div>
   </form>`;
   d.querySelector('.fechar').onclick=()=>d.close();
   d.querySelectorAll('.toggle input').forEach(i=>i.addEventListener('change',()=>{ i.closest('.toggle').querySelector('.estado').textContent = i.checked ? i.dataset.on : i.dataset.off; }));
@@ -540,16 +770,216 @@ function abrirForm(t,reg){
       if(c.req && (reg2[c.n]===null || reg2[c.n]==='')){ el.focus(); toast('Preencha: '+c.r); return; }
     }
     if(t==='ganhos'){ reg2.gorjeta = reg2.gorjeta||0; }
-    try{ await DB.salvar(t,reg2); d.close(); toast(editando?'Alterações salvas':'Lançamento salvo'); carregar(); }
+    try{ const r=await DB.salvar(t,reg2); d.close(); toast(r==='fila'?'Salvo no aparelho. Sincroniza quando a internet voltar.':(editando?'Alterações salvas':'Lançamento salvo')); carregar(); }
     catch(err){ console.error(err); toast('Erro ao salvar: '+(err.message||'tente de novo')); }
+  };
+  const br=d.querySelector('#btnRepetir');
+  if(br) br.onclick = async ()=>{
+    const u = await DB.ultimo('ganhos'); if(!u){ toast('Ainda não há ganho anterior.'); return; }
+    ['app','corridas','km','horas'].forEach(k=>{ const el=f.elements[k]; if(el && u[k]!=null) el.value = k==='app' ? u[k] : String(u[k]).replace('.',','); });
+    toast('Aplicativo, corridas, km e horas copiados. Falta o valor.'); f.elements.valor.focus();
   };
   const bx=d.querySelector('#btnExcluir');
   if(bx) bx.onclick = async ()=>{
     if(!confirm('Excluir este lançamento?')) return;
-    try{ await DB.excluir(t,reg.id); d.close(); toast('Lançamento excluído'); carregar(); }
+    try{ const r=await DB.excluir(t,reg.id); d.close(); toast(r==='fila'?'Excluído no aparelho. Sincroniza quando a internet voltar.':'Lançamento excluído'); carregar(); }
     catch(err){ toast('Erro ao excluir: '+(err.message||'')); }
   };
   if(!d.open) d.showModal();
+}
+
+/* ===== fechar o dia: vários lançamentos num formulário só ===== */
+function abrirFecharDia(){
+  const d=$('#dlg');
+  const apps = (estado.cfg && estado.cfg.apps_ativos && estado.cfg.apps_ativos.length) ? estado.cfg.apps_ativos : ['Uber'];
+  const cat = CATEGORIAS.filter(c=>c!=='Alimentação');
+  d.innerHTML = `<form id="fDia" novalidate>
+    <div class="form-cab"><h2>Fechar o dia</h2><button class="fechar" type="button" aria-label="Fechar">&times;</button></div>
+    <div class="form-corpo">
+      <div class="campo"><label for="d_data">Data</label><input id="d_data" name="data" type="date" value="${hoje()}" required></div>
+      <div class="campo" style="justify-content:flex-end"><button class="btn-link" type="button" id="btnRepetirDia">Repetir horas e km do último dia</button></div>
+      ${apps.map((a,i)=>`<fieldset class="grupo-app" data-app="${esc(a)}"><legend>${esc(a)}</legend>
+        <div class="campo"><label for="d${i}_valor">Valor (R$)</label><input id="d${i}_valor" name="valor" inputmode="decimal" autocomplete="off"></div>
+        <div class="campo"><label for="d${i}_corridas">Corridas</label><input id="d${i}_corridas" name="corridas" inputmode="numeric" autocomplete="off"></div>
+        <div class="campo"><label for="d${i}_km">Km</label><input id="d${i}_km" name="km" inputmode="decimal" autocomplete="off"></div>
+        <div class="campo"><label for="d${i}_horas">Horas</label><input id="d${i}_horas" name="horas" inputmode="decimal" autocomplete="off" placeholder="ex.: 8,5"></div>
+      </fieldset>`).join('')}
+      <p class="subtitulo">Gastos do dia</p>
+      <div class="campo"><label for="d_alim">Alimentação (R$)</label><input id="d_alim" name="alimentacao" inputmode="decimal" autocomplete="off"></div>
+      <div class="campo"><label for="d_outro">Outro gasto (R$)</label><input id="d_outro" name="outro" inputmode="decimal" autocomplete="off"></div>
+      <div class="campo cheio"><label for="d_cat">Categoria do outro gasto</label><select id="d_cat" name="categoria">${cat.map(c=>`<option ${c==='Outros'?'selected':''}>${esc(c)}</option>`).join('')}</select></div>
+      <p class="nota cheio" style="grid-column:1/-1;margin:0">Deixe em branco o que não teve. Abastecimento continua no botão próprio, por causa dos litros e do km do painel.</p>
+    </div>
+    <div class="form-pe"><button class="btn btn-pri" type="submit">Salvar o dia</button></div>
+  </form>`;
+  d.querySelector('.fechar').onclick=()=>d.close();
+  const f=d.querySelector('form');
+  d.querySelector('#btnRepetirDia').onclick = async ()=>{
+    const u = await DB.ultimo('ganhos'); if(!u){ toast('Ainda não há dia anterior.'); return; }
+    const [g] = await Promise.all([DB.listar('ganhos',u.data,u.data)]);
+    let n=0;
+    f.querySelectorAll('.grupo-app').forEach(fs=>{ const r=g.find(x=>x.app===fs.dataset.app); if(!r) return; n++;
+      ['km','horas'].forEach(k=>{ if(r[k]!=null) fs.querySelector(`[name="${k}"]`).value=String(r[k]).replace('.',','); }); });
+    toast(n ? 'Horas e km copiados do dia '+u.data.split('-').reverse().slice(0,2).join('/') : 'Não achei esses aplicativos no último dia.');
+  };
+  f.onsubmit = async e=>{
+    e.preventDefault();
+    const data = f.elements.data.value; if(!data){ toast('Preencha a data'); return; }
+    const regs=[];
+    for(const fs of f.querySelectorAll('.grupo-app')){
+      const v={}; for(const k of ['valor','corridas','km','horas']){ const el=fs.querySelector(`[name="${k}"]`); v[k]=parseNum(el.value); if(Number.isNaN(v[k])){ el.focus(); toast('Número inválido em '+fs.dataset.app); return; } }
+      if(v.valor) regs.push(['ganhos',{data,app:fs.dataset.app,valor:v.valor,gorjeta:0,corridas:v.corridas,km:v.km,horas:v.horas}]);
+      else if(v.corridas||v.km||v.horas){ fs.querySelector('[name="valor"]').focus(); toast('Falta o valor do '+fs.dataset.app); return; }
+    }
+    const alim=parseNum(f.elements.alimentacao.value), outro=parseNum(f.elements.outro.value);
+    if(Number.isNaN(alim)||Number.isNaN(outro)){ toast('Confira os valores dos gastos'); return; }
+    if(alim) regs.push(['gastos',{data,categoria:'Alimentação',valor:alim,fixo:false,descricao:null}]);
+    if(outro) regs.push(['gastos',{data,categoria:f.elements.categoria.value,valor:outro,fixo:false,descricao:null}]);
+    if(!regs.length){ toast('Preencha pelo menos um valor'); return; }
+    let fila=false;
+    try{ for(const [t,r] of regs){ if(await DB.salvar(t,r)==='fila') fila=true; } }
+    catch(err){ console.error(err); toast('Erro ao salvar: '+(err.message||'tente de novo')); return; }
+    d.close(); toast(fila?'Dia salvo no aparelho. Sincroniza quando a internet voltar.':`Dia fechado: ${regs.length} ${regs.length>1?'lançamentos salvos':'lançamento salvo'}`); carregar();
+  };
+  if(!d.open) d.showModal();
+}
+
+/* ===== escolher qualquer mês ou período ===== */
+function abrirPeriodo(){
+  const d=$('#dlg'); const [a,b]=intervalo(estado.periodo);
+  d.innerHTML = `<form id="fPer" novalidate>
+    <div class="form-cab"><h2>Escolher período</h2><button class="fechar" type="button" aria-label="Fechar">&times;</button></div>
+    <div class="form-corpo">
+      <div class="campo cheio"><label for="p_mes">Um mês inteiro</label><input id="p_mes" type="month" value="${a.slice(0,7)}"></div>
+      <div class="campo cheio"><button class="btn btn-pri" type="button" id="btnVerMes">Ver este mês</button></div>
+      <p class="ou">ou escolha as datas</p>
+      <div class="campo"><label for="p_ini">De</label><input id="p_ini" type="date" value="${a}"></div>
+      <div class="campo"><label for="p_fim">Até</label><input id="p_fim" type="date" value="${b}"></div>
+    </div>
+    <div class="form-pe"><button class="btn btn-pri" type="submit">Ver período</button></div>
+  </form>`;
+  d.querySelector('.fechar').onclick=()=>d.close();
+  const aplicar=(ini,fim,tipo,rotulo)=>{ estado.periodo='custom'; estado.ini=ini; estado.fim=fim; estado.customTipo=tipo; $('#btnOutro').textContent=rotulo; d.close(); carregar(); };
+  d.querySelector('#btnVerMes').onclick=()=>{
+    const v=d.querySelector('#p_mes').value; if(!v){ toast('Escolha o mês'); return; }
+    const [y,m]=v.split('-').map(Number); aplicar(v+'-01', iso(new Date(y,m,0)), 'mes', MESES[m-1]+'/'+y);
+  };
+  d.querySelector('form').onsubmit=e=>{
+    e.preventDefault(); const ini=d.querySelector('#p_ini').value, fim=d.querySelector('#p_fim').value;
+    if(!ini||!fim){ toast('Preencha as duas datas'); return; } if(ini>fim){ toast('A data inicial precisa vir antes da final'); return; }
+    const br=x=>x.split('-').reverse().join('/'); aplicar(ini,fim,'datas', br(ini).slice(0,5)+' a '+br(fim).slice(0,5)+(ini.slice(0,4)!==hoje().slice(0,4)?'/'+ini.slice(2,4):''));
+  };
+  if(!d.open) d.showModal();
+}
+
+/* ===== menu lateral: configurações e versão ===== */
+let swReg=null, swEsperando=null, novaVersao=null, pedidoInstalar=null;
+function abrirMenu(){ renderGaveta(); $('#gaveta').classList.add('on'); $('#veu').classList.add('on'); $('#btnMenu').setAttribute('aria-expanded','true'); setTimeout(()=>{ const b=$('#gaveta .fechar'); if(b) b.focus(); },50); }
+function fecharMenu(){ $('#gaveta').classList.remove('on'); $('#veu').classList.remove('on'); $('#btnMenu').setAttribute('aria-expanded','false'); }
+function toggleHtml(id,rotulo,on,txtOn,txtOff){
+  return `<label class="toggle" for="${id}"><input type="checkbox" id="${id}" ${on?'checked':''} data-on="${esc(txtOn)}" data-off="${esc(txtOff)}"><span class="trilho"></span><span class="rot">${rotulo}<span class="estado">${on?txtOn:txtOff}</span></span></label>`;
+}
+function renderGaveta(){
+  const c=estado.cfg||CFG_PADRAO, g=$('#gaveta'), pend=Fila.get().length;
+  const per={hoje:'Hoje',semana:'7 dias',mes:'Este mês',mesant:'Mês passado',ano:'Este ano'};
+  g.innerHTML = `<div class="gaveta-cab"><div class="marca"><i></i>Rodagem</div><button class="fechar" type="button" aria-label="Fechar menu">&times;</button></div>
+  <div class="gaveta-corpo">
+    <section class="cfg"><h3>Meta de lucro</h3>
+      <div class="campo"><label for="c_meta">Meta por dia (R$)</label><input id="c_meta" inputmode="decimal" autocomplete="off" placeholder="ex.: 250" value="${c.meta_diaria?String(c.meta_diaria).replace('.',','):''}"></div>
+      ${toggleHtml('c_mostrar','Mostrar meta no painel',c.mostrar_meta,'Ligado','Desligado')}
+    </section>
+    <section class="cfg"><h3>Aplicativos que você usa</h3>
+      <p>Aparecem no "Fechar o dia".</p>
+      ${APPS.map((a,i)=>toggleHtml('c_app'+i,a,c.apps_ativos.includes(a),'Ligado','Desligado')).join('')}
+      <div class="campo"><label for="c_padrao">Aplicativo padrão no lançamento</label><select id="c_padrao">${APPS.map(a=>`<option ${a===c.app_padrao?'selected':''}>${esc(a)}</option>`).join('')}</select></div>
+    </section>
+    <section class="cfg"><h3>Ao abrir o app</h3>
+      <div class="campo"><label for="c_per">Mostrar o período</label><select id="c_per">${Object.entries(per).map(([k,v])=>`<option value="${k}" ${k===c.periodo_inicial?'selected':''}>${v}</option>`).join('')}</select></div>
+    </section>
+    ${DEMO?'':`<section class="cfg"><h3>Sincronização</h3>
+      <p>${pend ? `${pend} ${pend>1?'lançamentos aguardando':'lançamento aguardando'} internet para subir.` : 'Tudo sincronizado com a nuvem.'}</p>
+      ${pend?'<button class="btn btn-sec" type="button" id="c_sync">Sincronizar agora</button>':''}
+    </section>`}
+    <section class="cfg"><h3>Instalar no aparelho</h3>
+      ${pedidoInstalar ? '<button class="btn btn-sec" type="button" id="c_instalar">Instalar o Rodagem</button>' : `<p>${window.matchMedia('(display-mode: standalone)').matches ? 'O app já está instalado neste aparelho.' : 'No Android: menu ⋮ do Chrome, Adicionar à tela inicial. No iPhone: botão compartilhar do Safari, Adicionar à Tela de Início.'}</p>`}
+    </section>
+    <section class="cfg"><h3>Versão</h3>
+      <div class="versao"><span>Instalada</span><b>${APP_VERSION}</b></div>
+      ${(swEsperando||novaVersao) ? `<div class="nova">Nova versão disponível${novaVersao?': <b>'+esc(novaVersao)+'</b>':''}.</div><button class="btn btn-sinal" type="button" id="c_atualizar">Atualizar agora</button>` : '<button class="btn btn-sec" type="button" id="c_verificar">Verificar atualização</button>'}
+    </section>
+    <section class="cfg"><h3>Conta</h3>
+      <p>${DEMO ? 'Modo demonstração, sem conta.' : esc(estado.email||'')}</p>
+      ${DEMO ? '' : '<button class="btn btn-sec" type="button" id="btnSair">Sair</button>'}
+    </section>
+  </div>`;
+  g.querySelector('.fechar').onclick = fecharMenu;
+  g.querySelectorAll('.toggle input').forEach(i=>i.addEventListener('change',()=>{ i.closest('.toggle').querySelector('.estado').textContent = i.checked ? i.dataset.on : i.dataset.off; }));
+  const salvar = async ()=>{ await Cfg.salvar(); toast('Configuração salva'); if(estado.aba==='painel') render(); };
+  g.querySelector('#c_meta').addEventListener('change',e=>{ const n=parseNum(e.target.value); if(Number.isNaN(n)){ toast('Valor da meta inválido'); return; } estado.cfg.meta_diaria=n||0; salvar(); });
+  g.querySelector('#c_mostrar').addEventListener('change',e=>{ estado.cfg.mostrar_meta=e.target.checked; salvar(); });
+  APPS.forEach((a,i)=>g.querySelector('#c_app'+i).addEventListener('change',e=>{
+    const set=new Set(estado.cfg.apps_ativos); e.target.checked?set.add(a):set.delete(a);
+    if(!set.size){ e.target.checked=true; e.target.dispatchEvent(new Event('change')); toast('Deixe pelo menos um aplicativo ligado'); return; }
+    estado.cfg.apps_ativos=APPS.filter(x=>set.has(x)); salvar(); }));
+  g.querySelector('#c_padrao').addEventListener('change',e=>{ estado.cfg.app_padrao=e.target.value; salvar(); });
+  g.querySelector('#c_per').addEventListener('change',e=>{ estado.cfg.periodo_inicial=e.target.value; salvar(); });
+  const bs=g.querySelector('#c_sync'); if(bs) bs.onclick=async()=>{ if(!navigator.onLine){ toast('Ainda sem internet'); return; } await Fila.processar(); renderGaveta(); carregar(); toast(Fila.get().length?'Alguns lançamentos ainda não subiram':'Tudo sincronizado'); };
+  const bi=g.querySelector('#c_instalar'); if(bi) bi.onclick=async()=>{ pedidoInstalar.prompt(); await pedidoInstalar.userChoice; pedidoInstalar=null; renderGaveta(); };
+  const bv=g.querySelector('#c_verificar'); if(bv) bv.onclick=verificarAtualizacao;
+  const ba=g.querySelector('#c_atualizar'); if(ba) ba.onclick=aplicarAtualizacao;
+  const bsair=g.querySelector('#btnSair'); if(bsair) bsair.onclick=async()=>{ await sb.auth.signOut(); ['cache_ganhos','cache_gastos','cache_abastecimentos','cfg'].forEach(k=>localStorage.removeItem('rodagem_'+k)); location.reload(); };
+}
+function atualizarPendentes(){
+  const temAviso = !!(swEsperando||novaVersao) || Fila.get().length>0;
+  const p=$('#pontoMenu'); if(p) p.classList.toggle('hide',!temAviso);
+  if($('#gaveta') && $('#gaveta').classList.contains('on')) renderGaveta();
+}
+function mostrarAvisoVersao(){
+  const el=$('#avisoVersao');
+  el.innerHTML = `<span>Nova versão do Rodagem disponível${novaVersao?' ('+esc(novaVersao)+')':''}.</span><button type="button" id="btnAvisoAtualizar">Atualizar agora</button>`;
+  el.classList.remove('hide'); el.querySelector('button').onclick=aplicarAtualizacao;
+  atualizarPendentes();
+}
+async function lerVersaoPublicada(){
+  const txt = await (await fetch('index.html?v='+Date.now(),{cache:'no-store'})).text();
+  const m = txt.match(/APP_VERSION\s*=\s*'([^']+)'/); return m ? m[1] : null;
+}
+async function avisarAtualizacao(worker){
+  swEsperando = worker;
+  try{ const v=await lerVersaoPublicada(); if(v && v!==APP_VERSION) novaVersao=v; }catch(e){}
+  mostrarAvisoVersao();
+}
+async function verificarAtualizacao(){
+  if(!navigator.onLine){ toast('Sem internet para verificar'); return; }
+  toast('Procurando atualização...');
+  try{
+    if(swReg){ await swReg.update(); if(swReg.waiting){ await avisarAtualizacao(swReg.waiting); return; } if(swReg.installing){ toast('Baixando a nova versão...'); return; } }
+    const v = await lerVersaoPublicada();
+    if(v && v!==APP_VERSION){ novaVersao=v; mostrarAvisoVersao(); }
+    else toast('Você já está na versão mais recente ('+APP_VERSION+')');
+  }catch(e){ toast('Não foi possível verificar agora'); }
+}
+async function aplicarAtualizacao(){
+  if(swEsperando){ swEsperando.postMessage('SKIP_WAITING'); return; }
+  // sem service worker esperando: limpa o que está guardado e recarrega a versão publicada
+  try{ if('caches' in window){ const ks=await caches.keys(); await Promise.all(ks.map(k=>caches.delete(k))); } if(swReg) await swReg.unregister(); }catch(e){}
+  location.reload();
+}
+function iniciarPWA(){
+  window.addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); pedidoInstalar=e; });
+  const offline=()=>$('#avisoOffline').classList.toggle('hide',navigator.onLine);
+  window.addEventListener('online',()=>{ offline(); Fila.processar().then(()=>{ if(!$('#app').classList.contains('hide')) carregar(); }); });
+  window.addEventListener('offline',offline); offline();
+  if(!('serviceWorker' in navigator) || !location.protocol.startsWith('http')) return;
+  navigator.serviceWorker.register('sw.js').then(reg=>{
+    swReg=reg;
+    if(reg.waiting && navigator.serviceWorker.controller) avisarAtualizacao(reg.waiting);
+    reg.addEventListener('updatefound',()=>{ const nw=reg.installing; if(!nw) return;
+      nw.addEventListener('statechange',()=>{ if(nw.state==='installed' && navigator.serviceWorker.controller) avisarAtualizacao(nw); }); });
+    document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') reg.update().catch(()=>{}); });
+  }).catch(e=>console.warn('service worker', e));
+  let recarregando=false;
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{ if(recarregando) return; recarregando=true; location.reload(); });
 }
 
 /* ===== exportar planilha (CSV que abre no Excel e no Google Planilhas) ===== */
@@ -568,18 +998,22 @@ function exportar(){
 }
 
 /* ===== início e login ===== */
-function entrarNoApp(){
+async function entrarNoApp(){
   $('#telaLogin').classList.add('hide'); $('#app').classList.remove('hide');
+  await Cfg.carregar();
+  estado.periodo = estado.cfg.periodo_inicial || 'mes';
+  atualizarPendentes();
   carregar();
 }
 async function iniciar(){
   montarNavegacao();
   $('#fab').onclick = ()=>{ estado.aba==='painel' ? abrirEscolha() : abrirForm(estado.aba); };
   $('#btnCsv').onclick = exportar;
+  $('#btnMenu').onclick = abrirMenu; $('#veu').onclick = fecharMenu;
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape' && $('#gaveta').classList.contains('on')) fecharMenu(); });
+  iniciarPWA();
   if(DEMO){ semearDemo(); $('#avisoDemo').classList.remove('hide'); entrarNoApp(); return; }
 
-  $('#btnSair').classList.remove('hide');
-  $('#btnSair').onclick = async ()=>{ await sb.auth.signOut(); location.reload(); };
   const msg=$('#lMsg');
   $('#formLogin').onsubmit = async e=>{
     e.preventDefault(); msg.textContent='';
@@ -595,8 +1029,10 @@ async function iniciar(){
     if(!data.session){ msg.style.color='var(--lucro)'; msg.textContent='Conta criada. Confirme pelo link enviado ao seu e-mail e depois entre.'; }
   };
   const {data:{session}} = await sb.auth.getSession();
+  const guardar = s => { if(s && s.user){ estado.userId=s.user.id; estado.email=s.user.email||''; } };
+  guardar(session);
   if(session) entrarNoApp(); else $('#telaLogin').classList.remove('hide');
-  sb.auth.onAuthStateChange((ev,s)=>{ if(ev==='SIGNED_IN' && $('#app').classList.contains('hide')) entrarNoApp(); });
+  sb.auth.onAuthStateChange((ev,s)=>{ guardar(s); if(ev==='SIGNED_IN' && $('#app').classList.contains('hide')) entrarNoApp(); });
 }
 iniciar();
 </script>
